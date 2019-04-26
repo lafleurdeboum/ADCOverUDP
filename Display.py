@@ -39,7 +39,7 @@ class _DisplayX86:
     """Emulate OLED display. This lets you run the package on computers
     """
     arch = "x86"
-    def print(self, arg):
+    def Dprint(self, arg):
         print("*** ", arg, " ***")
 
 
@@ -69,8 +69,9 @@ class _OledDisplay:
         self.display.fill(0)
         self.display.show()
 
-    def print(self, text, x=0, y=0):
+    def Dprint(self, text, x=0, y=0):
         """Print some text. A char is roughly 8 pixels high and 4 wide."""
+        print("*** ", text, " ***")
         #global line_length, screen_height, char_height
         # Wrap lines at newlines :
         folded_text = text.split("\n")
@@ -85,8 +86,8 @@ class _OledDisplay:
         for index, line in enumerate(line_list):
             # index starts at 0.
             if index >= self.screen_height:
-                # The error gets raised only after first lines are printed :
-                    raise OSError("only %i chars in OLED display ; couldn't print : %s" %
+                # Do not raise an error, but warn on stdout
+                print('! only %i chars in OLED display ; couldn\'t print :\n"%s"' %
                         (self.line_length * self.screen_height, line))
             self.display.text(line, x, y + index*self.char_height)
         self.display.show()
@@ -134,8 +135,8 @@ class _DisplayEsp8266(_OledDisplay):
     TXD1_PIN = 2            # OLED_SDA
     SDA_PIN = 4             # OLED_RST
     CLK_PIN = 14            # OLED_SCL
-    line_length = 16        # OLED char per line
-    screen_height = 3       # OLED char per column
+    line_length = 10        # OLED char per line
+    screen_height = 4       # OLED char per column
     char_height = 8         # OLED font char height
 
 

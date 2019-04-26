@@ -1,8 +1,3 @@
-"""
-retrieved in https://forum.micropython.org/viewtopic.php?t=5063
-"""
-
-
 import gc
 import array
 import machine
@@ -21,13 +16,16 @@ elif sys.platform == "esp8266":
 elif sys.platform == "linux":
     import random
     def ADC():
+        """fake ADC to let you run the code on computers"""
         time.sleep(random.randint(0, 9))
         return random.randint(410, 4095)
 
 import network_helpers
 import Display
 
-_print = Display.Display().print
+# _print to OLED GPIO display if any, otherwise
+# default to stdout :
+_print = Display.Display().Dprint
 
 def pause():
     """Hang a few milliseconds"""
@@ -35,28 +33,6 @@ def pause():
     #machine.lightsleep(10)
     machine.idle()
     time.sleep_ms(10)
-
-def ip2bits(ip):
-    res = 0
-    for part in ip.split("."):
-        res <<= 8
-        res |= int(part)
-    return res
-
-def bits2ip(bits):
-    res = []
-    for _ in range(4):
-        res.append(str(bits & 0xff))
-        bits >>= 8
-    return ".".join(reversed(res))
-
-def get_broadcast(nic):
-    ip, netmask, _, _ = nic.ifconfig()
-    bca_bits = ip2bits(ip)
-    netmask_bits = ip2bits(netmask)
-    bca_bits &= netmask_bits
-    bca_bits |= ~netmask_bits
-    return bits2ip(bca_bits)
 
 def read_adc():
     read_value = 0
@@ -66,19 +42,17 @@ def read_adc():
     print(read_value)
     return b"%04i" % read_value
 
-
 def main():
     _print("Connecting wifi")
     #nic = network_helpers.setup_wifi()
-    nic = network_helpers.setup_ap()
+    nic, broadcast = network_helpers.setup_ap()
     while not nic.isconnected():
         pause()
 
-    broadcast_address = get_broadcast(nic)
-    print("broadcast is %s" % broadcast_address)
+    print("broadcast is %s" % broadcast)
 
     sock = network_helpers.setup_socket(nic)
-    address = (broadcast_address, network_helpers.PORT)
+    address = (broadcast, network_helpers.PORT)
     then = time.time()
     count = 0
     while True:

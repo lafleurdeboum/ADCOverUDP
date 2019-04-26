@@ -3,9 +3,16 @@ import time
 
 import network_helpers
 import Display
+import Relay
 
 
-_print = Display.Display().print
+MAX_PAYLOAD = 4096
+
+# _print to OLED GPIO display if any, otherwise
+# default to stdout :
+_print = Display.Display().Dprint
+
+relay = Relay.setup_relay()
 
 def pause():
     """Hang a few milliseconds"""
@@ -16,26 +23,38 @@ def pause():
 
 def main():
     _print("Connecting wifi")
-    nic = network_helpers.setup_wifi()
+    nic, broadcast = network_helpers.setup_wifi()
     while not nic.isconnected():
         pause()
 
     _print("Setting socket")
-    #s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #s.bind(("192.168.4.255", 8080))
-    #s.bind(("192.168.1.255", 8080))
-    #s.bind(("", 8080))
     sock = network_helpers.setup_socket(nic)
-    sock.settimeout(None)
+    # We will need non-blocking calls to be able to re-check connection state :
+    sock.settimeout(2.0)
 
     _print("Reading on AP\n%s\nport %s" %
             (nic.config("essid"), network_helpers.PORT)
     )
     payload = b""
+    # Alternate between unconnected and connected states :
     while True:
-        payload = sock.recv(4).decode()
-        print(payload)
-        pause()
+        while nic.isconnected():
+            try:
+                payload = int(sock.recv(4).decode())
+            except OSError as e:
+                if e.args[0] == 110:            # ETIMEDOUT
+                    # Connection timed out ; retry
+                    continue
+                else:
+                    raise e
+            # If signal goes above average, toggle relay :
+            if payload > int(MAX_PAYLOAD/2):
+                Relay.blink(relay)              # milliseconds
+            pause()
+
+        # Wait for the nic process to find a network back :
+        while not nic.isconnected():
+            pause()
 
 if __name__ == "__main__":
     main()
