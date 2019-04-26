@@ -11,7 +11,8 @@ import network
 import socket
 try:
     import esp32
-    ADC = machine.ADC(machine.Pin(self.adc_pin))
+    ADC_PIN = 32
+    ADC = machine.ADC(machine.Pin(ADC_PIN))
     ADC.atten(machine.ADC.ATTN_11DB)
     READ_MIN = 400
     #self.adc.width(machine.ADC.WIDTH_9BIT)
@@ -19,7 +20,7 @@ except ImportError:
     ADC = machine.ADC(0)
     READ_MIN = 6
 
-#import Display
+import Display
 
 
 PORT = 8080
@@ -59,8 +60,7 @@ def read_adc():
     read_value = 0
     while read_value < READ_MIN:
         pause()
-        read_value = ADC.read()
-    return read_value
+    return b"%04i" % ADC.read()
 
 def setup_wifi():
     nic = network.WLAN(network.STA_IF)
@@ -103,7 +103,6 @@ def main():
     nic, broadcast_address = setup_wifi()
     s = setup_socket(nic)
     address = (broadcast_address, PORT)
-    message = "foob"
     then = time.time()
     count = 0
     _print("Now sending to %s" % broadcast_address)
@@ -119,7 +118,7 @@ def main():
             raise
         pause()
         if time.time() - then > 1:
-            _print(count, gc.mem_free())
+            _print("ran %i times\n%i space left" % (count, gc.mem_free()))
             gc.collect()
             then += 1
 
