@@ -7,8 +7,6 @@ import gc
 import array
 import machine
 import time
-import network
-import socket
 try:
     import esp32
     ADC_PIN = 32
@@ -20,7 +18,7 @@ except ImportError:
     ADC = machine.ADC(0)
     READ_MIN = 6
 
-import wifi_helper
+import network_helpers
 import Display
 
 PORT = 8080
@@ -58,22 +56,6 @@ def get_broadcast(nic):
     bca_bits |= ~netmask_bits
     return bits2ip(bca_bits)
 
-def setup_socket(nic):
-    sock = socket.socket(
-            socket.AF_INET,
-            socket.SOCK_DGRAM
-    )
-    sock.setsockopt(
-            socket.SOL_SOCKET,
-            socket.SO_REUSEADDR,
-            1
-    )
-    sock.settimeout(1.0)
-    ip, *_ = nic.ifconfig()
-    sock.bind((ip, PORT))
-    return sock
-
-
 def read_adc():
     read_value = 0
     while read_value < READ_MIN:
@@ -85,16 +67,16 @@ def read_adc():
 
 def main():
     _print("Connecting wifi")
-    #nic = wifi_helper.setup_wifi()
-    nic = wifi_helper.setup_ap()
+    #nic = network_helpers.setup_wifi()
+    nic = network_helpers.setup_ap()
     while not nic.isconnected():
         pause()
 
     broadcast_address = get_broadcast(nic)
     print("broadcast is %s" % broadcast_address)
 
-    s = setup_socket(nic)
-    address = (broadcast_address, PORT)
+    sock = network_helpers.setup_socket(nic)
+    address = (broadcast_address, network_helpers.PORT)
     then = time.time()
     count = 0
     while True:
@@ -102,7 +84,7 @@ def main():
                 address)
         while nic.isconnected():
             try:
-                s.sendto(read_adc(), address)
+                sock.sendto(read_adc(), address)
                 count += 1
             except OSError:
                 _print(count)
