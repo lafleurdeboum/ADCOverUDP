@@ -9,6 +9,17 @@ import machine
 import time
 import network
 import socket
+try:
+    import esp32
+    ADC = machine.ADC(machine.Pin(self.adc_pin))
+    ADC.atten(machine.ADC.ATTN_11DB)
+    READ_MIN = 400
+    #self.adc.width(machine.ADC.WIDTH_9BIT)
+except ImportError:
+    ADC = machine.ADC(0)
+    READ_MIN = 6
+
+#import Display
 
 
 PORT = 8080
@@ -18,6 +29,17 @@ KNOWN_NETWORKS = {
     b"flip": b"PilfPilf",
 }
 
+DISPLAY = Display.Display()
+
+def _print(arg):
+    DISPLAY.print(arg)
+
+def pause():
+    """Hang a few milliseconds"""
+    #machine.sleep(0.01)
+    #machine.lightsleep(10)
+    machine.idle()
+    time.sleep_ms(10)
 
 def ip2bits(ip):
     res = 0
@@ -33,6 +55,12 @@ def bits2ip(bits):
         bits >>= 8
     return ".".join(reversed(res))
 
+def read_adc():
+    read_value = 0
+    while read_value < READ_MIN:
+        pause()
+        read_value = ADC.read()
+    return read_value
 
 def setup_wifi():
     nic = network.WLAN(network.STA_IF)
@@ -44,14 +72,13 @@ def setup_wifi():
     for name, *_ in networks:
         if name in KNOWN_NETWORKS:
             nic.connect(name, KNOWN_NETWORKS[name])
-            print("Connecting to {}".format(name.decode("ascii")))
+            _print("Connecting to {}".format(name.decode("ascii")))
             ip, netmask, _, _ = nic.ifconfig()
             bca_bits = ip2bits(ip)
             netmask_bits = ip2bits(netmask)
             bca_bits &= netmask_bits
             bca_bits |= ~netmask_bits
             broadcast_address = bits2ip(bca_bits)
-    
     return nic, broadcast_address
 
 
@@ -60,45 +87,39 @@ def setup_socket(nic):
         socket.AF_INET,
         socket.SOCK_DGRAM
     )
-    print("Waiting for wifi connection")
+    _print("wifi not connected yet")
     while not nic.isconnected():
-        #time.sleep(.1)
-        machine.idle()
-        time.sleep_ms(20)
-    print("Binding socket")
+        pause()
+    _print("Binding socket")
     sock.settimeout(1.0)
-    print("done")
+    _print("socket bound")
     ip, *_ = nic.ifconfig()
     sock.bind((ip, PORT))
     return sock
 
 
 def main():
-    print("Connecting wifi")
+    _print("Connecting wifi")
     nic, broadcast_address = setup_wifi()
     s = setup_socket(nic)
     address = (broadcast_address, PORT)
     message = "foob"
     then = time.time()
     count = 0
-    print("Now sending to %s" % broadcast_address)
+    _print("Now sending to %s" % broadcast_address)
     while True:
         try:
-            s.sendto(message, address)
+            s.sendto(read_adc(), address)
             count += 1
         except OSError:
-            print(count)
+            _print(count)
             raise
         except KeyboardInterrupt:
-            print(count)
+            _print(count)
             raise
-        # Hang a few milliseconds
-        #machine.sleep(100)
-        #machine.lightsleep()
-        machine.idle()
-        time.sleep_ms(10)
+        pause()
         if time.time() - then > 1:
-            print(count, gc.mem_free())
+            _print(count, gc.mem_free())
             gc.collect()
             then += 1
 
