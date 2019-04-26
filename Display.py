@@ -16,12 +16,22 @@ and connection pins referenced in http://simplestuffmatters.com/wemos-ttgo-esp82
 """
 
 
-def Display():
+def _initialDisplay():
     try: d = _DisplayEsp32()
     except ImportError:
         try: d = _DisplayEsp8266()
         except ImportError:
             d = _DisplayX86()
+    return d
+
+def Display():
+    import sys
+    if sys.platform == "esp32":
+        d = _DisplayEsp32()
+    elif sys.platform == "esp8266":
+        d = _DisplayEsp8266()
+    elif sys.platform == "linux":
+        d = _DisplayX86()
     return d
 
 

@@ -6,9 +6,6 @@ import Display
 
 
 _print = Display.Display().print
-#DISPLAY = Display.Display()
-#def _print(arg):
-#    DISPLAY.print(arg)
 
 def pause():
     """Hang a few milliseconds"""
@@ -31,7 +28,9 @@ def main():
     sock = network_helpers.setup_socket(nic)
     sock.settimeout(None)
 
-    _print("Reading")
+    _print("Reading on AP\n%s\nport %s" %
+            (nic.config("essid"), network_helpers.PORT)
+    )
     payload = b""
     while True:
         payload = sock.recv(4).decode()

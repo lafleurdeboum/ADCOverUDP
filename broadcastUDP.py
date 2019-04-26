@@ -7,25 +7,27 @@ import gc
 import array
 import machine
 import time
-try:
+import sys
+if sys.platform == "esp32":
     import esp32
     ADC_PIN = 32
     ADC = machine.ADC(machine.Pin(ADC_PIN))
     ADC.atten(machine.ADC.ATTN_11DB)
     READ_MIN = 400
     #self.adc.width(machine.ADC.WIDTH_9BIT)
-except ImportError:
+elif sys.platform == "esp8266":
     ADC = machine.ADC(0)
     READ_MIN = 6
+elif sys.platform == "linux":
+    import random
+    def ADC():
+        time.sleep(random.randint(0, 9))
+        return random.randint(410, 4095)
 
 import network_helpers
 import Display
 
-PORT = 8080
-DISPLAY = Display.Display()
-
-def _print(arg):
-    DISPLAY.print(arg)
+_print = Display.Display().print
 
 def pause():
     """Hang a few milliseconds"""
@@ -94,11 +96,11 @@ def main():
                 raise
             pause()
             if time.time() - then > 1:
-                _print("#%i - %i space" % (count, gc.mem_free()))
+                #_print("#%i - %i space" % (count, gc.mem_free()))
                 gc.collect()
                 then += 1
 
-        _print("Awaiting conn")
+        _print("Awaiting conn on AP\n%s" % nic.config("essid"))
         while not nic.isconnected():
                 pause()
 
