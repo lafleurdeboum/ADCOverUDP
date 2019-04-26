@@ -20,16 +20,10 @@ except ImportError:
     ADC = machine.ADC(0)
     READ_MIN = 6
 
+import wifi_helper
 import Display
 
-
 PORT = 8080
-
-KNOWN_NETWORKS = {
-    b"Jia": b"marseille2paris",
-    b"flip": b"PilfPilf",
-}
-
 DISPLAY = Display.Display()
 
 def _print(arg):
@@ -56,71 +50,75 @@ def bits2ip(bits):
         bits >>= 8
     return ".".join(reversed(res))
 
-def read_adc():
-    read_value = 0
-    while read_value < READ_MIN:
-        pause()
-    return b"%04i" % ADC.read()
-
-def setup_wifi():
-    nic = network.WLAN(network.STA_IF)
-    nic.active(True)
-    networks = nic.scan()
-    #broadcast_address = None
-    broadcast_address = "192.168.1.255"
-    #broadcast_address = ""
-    for name, *_ in networks:
-        if name in KNOWN_NETWORKS:
-            nic.connect(name, KNOWN_NETWORKS[name])
-            _print("Connecting to {}".format(name.decode("ascii")))
-            ip, netmask, _, _ = nic.ifconfig()
-            bca_bits = ip2bits(ip)
-            netmask_bits = ip2bits(netmask)
-            bca_bits &= netmask_bits
-            bca_bits |= ~netmask_bits
-            broadcast_address = bits2ip(bca_bits)
-    return nic, broadcast_address
-
+def get_broadcast(nic):
+    ip, netmask, _, _ = nic.ifconfig()
+    bca_bits = ip2bits(ip)
+    netmask_bits = ip2bits(netmask)
+    bca_bits &= netmask_bits
+    bca_bits |= ~netmask_bits
+    return bits2ip(bca_bits)
 
 def setup_socket(nic):
     sock = socket.socket(
-        socket.AF_INET,
-        socket.SOCK_DGRAM
+            socket.AF_INET,
+            socket.SOCK_DGRAM
     )
-    _print("wifi not connected yet")
-    while not nic.isconnected():
-        pause()
-    _print("Binding socket")
+    sock.setsockopt(
+            socket.SOL_SOCKET,
+            socket.SO_REUSEADDR,
+            1
+    )
     sock.settimeout(1.0)
-    _print("socket bound")
     ip, *_ = nic.ifconfig()
     sock.bind((ip, PORT))
     return sock
 
 
+def read_adc():
+    read_value = 0
+    while read_value < READ_MIN:
+        pause()
+        read_value = ADC.read()
+    print(read_value)
+    return b"%04i" % read_value
+
+
 def main():
     _print("Connecting wifi")
-    nic, broadcast_address = setup_wifi()
+    #nic = wifi_helper.setup_wifi()
+    nic = wifi_helper.setup_ap()
+    while not nic.isconnected():
+        pause()
+
+    broadcast_address = get_broadcast(nic)
+    print("broadcast is %s" % broadcast_address)
+
     s = setup_socket(nic)
     address = (broadcast_address, PORT)
     then = time.time()
     count = 0
-    _print("Now sending to %s" % broadcast_address)
     while True:
-        try:
-            s.sendto(read_adc(), address)
-            count += 1
-        except OSError:
-            _print(count)
-            raise
-        except KeyboardInterrupt:
-            _print(count)
-            raise
-        pause()
-        if time.time() - then > 1:
-            _print("ran %i times\n%i space left" % (count, gc.mem_free()))
-            gc.collect()
-            then += 1
+        _print("Sending ADC signal to\n%s\nport %s" %
+                address)
+        while nic.isconnected():
+            try:
+                s.sendto(read_adc(), address)
+                count += 1
+            except OSError:
+                _print(count)
+                raise
+            except KeyboardInterrupt:
+                _print(count)
+                raise
+            pause()
+            if time.time() - then > 1:
+                _print("#%i - %i space" % (count, gc.mem_free()))
+                gc.collect()
+                then += 1
+
+        _print("Awaiting conn")
+        while not nic.isconnected():
+                pause()
 
 
 if __name__ == "__main__":
