@@ -8,7 +8,7 @@ They will behave quite the same anyway : it will try to connect in the backgroun
 and the nic you get back can be tested :
 
     while True:
-        nic = setup_wifi()
+        nic = setupWifi()
         if nic.isconnected():
             do something useful
         else:
@@ -18,22 +18,12 @@ and the nic you get back can be tested :
 
 import sys
 import socket
-
-if sys.platform == "linux":
-    class network:
-        class WLAN:
-            def active(self, yes=True):
-                pass
-            def scan(self):
-                pass
-else:
-    import network
+import network
 
 
-PORT = 8080
 SOCKET_TIMEOUT = None
 
-KNOWN_NETWORKS = {
+KNOWN_CONNECTIONS = {
     b"microP": b"micropython",
     #b"Jia": b"marseille2paris",
     #b"flip": b"PilfPilf",
@@ -47,20 +37,20 @@ FALLBACK_PASSWD = "micropython"
 #           NIC resolution
 #
 
-def setup_wifi():
+def setupWifi():
     wifi = network.WLAN(network.STA_IF)
     wifi.active(True)
     networks = wifi.scan()
     #broadcast_address = "255.255.255.255"
     #broadcast_address = "192.168.1.255"
     for name, *_ in networks:
-        if name in KNOWN_NETWORKS:
+        if name in KNOWN_CONNECTIONS:
             #print("Connecting to {}".format(name.decode("ascii")))
-            wifi.connect(name, KNOWN_NETWORKS[name])
+            wifi.connect(name, KNOWN_CONNECTIONS[name])
             break
-    return wifi, get_broadcast(wifi)
+    return wifi, getBroadcast(wifi)
 
-def setup_ap():
+def setupAccessPoint():
     ap = network.WLAN(network.AP_IF)
     ap.active(True)
     ap.config(
@@ -69,15 +59,17 @@ def setup_ap():
             authmode=network.AUTH_WPA2_PSK,
             password=FALLBACK_PASSWD
     )
-    #ap.broadcast = get_broadcast(ap)
-    return ap, get_broadcast(ap)
+    #ap.broadcast = getBroadcast(ap)
+    return ap, getBroadcast(ap)
 
 
 #
 #           UDP query setup
 #
 
-def setup_socket(nic):
+def setupSocket(nic, port):
+    """Open an UDP socket and bind it to port on network interface.
+    """
     sock = socket.socket(
             socket.AF_INET,
             socket.SOCK_DGRAM
@@ -89,7 +81,7 @@ def setup_socket(nic):
     )
     sock.settimeout(SOCKET_TIMEOUT)
     ip, *_ = nic.ifconfig()
-    sock.bind((ip, PORT))
+    sock.bind((ip, port))
     return sock
 
 
@@ -111,7 +103,7 @@ def bits2ip(bits):
         bits >>= 8
     return ".".join(reversed(res))
 
-def get_broadcast(nic):
+def getBroadcast(nic):
     ip, netmask, _, _ = nic.ifconfig()
     bca_bits = ip2bits(ip)
     netmask_bits = ip2bits(netmask)

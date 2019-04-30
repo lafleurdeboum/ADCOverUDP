@@ -16,16 +16,11 @@ and connection pins referenced in http://simplestuffmatters.com/wemos-ttgo-esp82
 """
 
 
-def _initialDisplay():
-    try: d = _DisplayEsp32()
-    except ImportError:
-        try: d = _DisplayEsp8266()
-        except ImportError:
-            d = _DisplayX86()
-    return d
+import sys
+if sys.platform == "esp32" or sys.platform == "esp8266":
+    import ssd1306
 
 def Display():
-    import sys
     if sys.platform == "esp32":
         d = _DisplayEsp32()
     elif sys.platform == "esp8266":
@@ -38,8 +33,7 @@ def Display():
 class _DisplayX86:
     """Emulate OLED display. This lets you run the package on computers
     """
-    arch = "x86"
-    def Dprint(self, arg):
+    def print(self, arg):
         print("*** ", arg, " ***")
 
 
@@ -69,7 +63,7 @@ class _OledDisplay:
         self.display.fill(0)
         self.display.show()
 
-    def Dprint(self, text, x=0, y=0):
+    def print(self, text, x=0, y=0):
         """Print some text. A char is roughly 8 pixels high and 4 wide."""
         print("*** ", text, " ***")
         #global line_length, screen_height, char_height
@@ -115,7 +109,6 @@ class _OledDisplay:
 class _DisplayEsp32(_OledDisplay):
     """Implement ESP32 OLED display
     """
-    arch = "Esp32"
     TXD1_PIN = 4            # OLED_SDA
     SDA_PIN = 16            # OLED_RST
     CLK_PIN = 15            # OLED_SCL
@@ -123,15 +116,10 @@ class _DisplayEsp32(_OledDisplay):
     screen_height = 4       # OLED char per column
     char_height = 8         # OLED font char height
 
-    def __init__(self):
-        import esp32
-        super().__init__()
-
 
 class _DisplayEsp8266(_OledDisplay):
     """Implement TTGO ESP8266 OLED display
     """
-    arch = "Esp8266"
     TXD1_PIN = 2            # OLED_SDA
     SDA_PIN = 4             # OLED_RST
     CLK_PIN = 14            # OLED_SCL
