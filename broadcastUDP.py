@@ -27,7 +27,7 @@ def takeANap():
     machine.idle()
     time.sleep_ms(10)
 
-def broadcastADCoverUDP(nic, address):
+def broadcastADCOverUDP(nic, address):
     """Send signal read on ADC over UDP broadcast, port PORT.
     """
     sock = networkHelpers.setupSocket(nic, address[1])
@@ -62,5 +62,5 @@ if __name__ == "__main__":
     nic, broadcast = networkHelpers.setupAccessPoint()
     print("broadcast is %s" % broadcast)
     address = (broadcast, PORT)
-    broadcastADCoverUDP(nic, address)
+    broadcastADCOverUDP(nic, address)
 
