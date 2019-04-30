@@ -1,8 +1,8 @@
 import machine
 import time
 
-import networkHelpers
 import hardware
+import wifi
 
 
 MAX_PAYLOAD = 4096
@@ -23,20 +23,24 @@ def takeANap():
     machine.idle()
     time.sleep_ms(10)
 
-def grabSignalOverUDP(nic, port):
+def grabSignalOverUDP(connection, port):
+    """Read a signal sent to this machine's port.
+
+    One apparently doesn't receive broadcast signals if one binds to a local ip.
+    One should bind to the broadcast address, like this :
+    """
     _print("Setting socket")
-    sock = networkHelpers.setupSocket(nic, port)
+    address = connection.broadcast, port
+    sock = connection.openUDPSocket(address)
     # We will need non-blocking calls to be able to re-check connection state :
     sock.settimeout(2.0)
 
-    _print("Reading on AP\n%s\nport %s" %
-            (nic.config("essid"), port)
-    )
+    _print("Listening on AP\n%s\nport %s" % (connection.essid, port))
     # Alternate between unconnected and connected states :
     while True:
-        while not nic.isconnected():
+        while not connection.isconnected():
             takeANap()
-        while nic.isconnected():
+        while connection.isconnected():
             try:
                 payload = sock.recv(4)
             except OSError as e:
@@ -62,8 +66,6 @@ def grabSignalOverUDP(nic, port):
 
 if __name__ == "__main__":
     _print("Connecting wifi")
-    #nic, broadcast = networkHelpers.setupWifi()
-    nic, _ = networkHelpers.setupWifi()
-    grabSignalOverUDP(nic, PORT)
-    main()
+    connection = wifi.WifiConnection()
+    grabSignalOverUDP(connection, PORT)
 

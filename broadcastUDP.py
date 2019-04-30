@@ -26,18 +26,26 @@ def takeANap():
 def broadcastADCOverUDP(nic, address):
     """Send signal read on ADC over UDP broadcast, port PORT.
     """
-    sock = networkHelpers.setupSocket(nic, address[1])
+    _print("Setting socket")
+    sock = connection.openUDPSocket((connection.ip, port))
+    address = connection.broadcast, port
+    # Alternate between unconnected and connected states :
     while True:
-        _print("Serving on AP :\n%s" % nic.config("essid"))
-        while not nic.isconnected():
+        _print("Waiting clients on AP :\n%s" % connection.essid)
+        while not connection.isconnected():
                 takeANap()
         periodic_age = time.time()
         count = 0
-        _print("Sending ADC signal to\n%s\nport %s" %
-                address)
-        while nic.isconnected():
+        _print("Sending ADC signal to\n%s\nport %s" % address)
+        # Disable garbage auto-collection, we'll handle it when we have time.
+        gc.disable()
+        while connection.isconnected():
+            readValue = adc.readMeaningfulValue()
             try:
-                sock.sendto(bytes(adc.readMeaningfulValue()), address)
+                sock.sendto(
+                        bytes(readValue),
+                        address
+                )
                 count += 1
             except OSError as e:
                 print(count)
@@ -46,17 +54,17 @@ def broadcastADCOverUDP(nic, address):
                 print(count)
                 raise e
             takeANap()
-            if time.time() - periodic_age > 1:
+            if time.time() - periodic_age > 1:  # This is 1 second.
                 #_print("#%i - %i space" % (count, gc.mem_free()))
                 gc.collect()
                 periodic_age += 1
+        # Re-enable grabage auto-collection.
+        gc.enable()
 
 
 if __name__ == "__main__":
     _print("setting wifi server up")
-    #nic = networkHelpers.setupWifi()
-    nic, broadcast = networkHelpers.setupAccessPoint()
-    print("broadcast is %s" % broadcast)
-    address = (broadcast, PORT)
-    broadcastADCOverUDP(nic, address)
+    accessPoint = wifi.AccessPoint()
+    print("broadcast is %s" % accessPoint.broadcast)
+    broadcastADCoverUDP(accessPoint, PORT)
 
