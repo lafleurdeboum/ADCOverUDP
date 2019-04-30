@@ -1,22 +1,18 @@
 import gc
-import array
 import machine
 import time
-import sys
 
-import ADC
+import hardware
 import networkHelpers
-import Display
 
 
 PORT = 8080
 
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = Display.Display().print
+_print = hardware.Display().print
 
-
-adc = ADC.ADC()
+adc = hardware.ADC()
 
 
 def takeANap():

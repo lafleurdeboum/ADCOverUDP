@@ -2,18 +2,19 @@ import machine
 import time
 
 import networkHelpers
-import Display
-import Relay
+import hardware
 
 
 MAX_PAYLOAD = 4096
 PORT = 8080
 
+
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = Display.Display().print
+_print = hardware.Display().print
 
-relay = Relay.Relay()
+relay = hardware.Relay()
+
 
 def takeANap():
     """Hang a few milliseconds"""
@@ -29,7 +30,7 @@ def grabSignalOverUDP(nic, port):
     sock.settimeout(2.0)
 
     _print("Reading on AP\n%s\nport %s" %
-            (nic.config("essid"), networkHelpers.PORT)
+            (nic.config("essid"), port)
     )
     # Alternate between unconnected and connected states :
     while True:
@@ -48,9 +49,11 @@ def grabSignalOverUDP(nic, port):
             except socket.timeout:
                 takeANap()
                 continue
-            print(payload)
+            #DEBUG this returns an empty string - in fact b"\x00" * 4
+            print(payload.decode())
             # If signal goes above average, toggle relay :
-            #if int(payload) > int(MAX_PAYLOAD / 2):
+            # WARNING this would use this machine's adc's output range.
+            #if int(payload) > int(hardware.ADC.OUTPUT_RANGE / 2):
             #    print("blinking ...")
             #    relay.blink()
             relay.blink()
@@ -59,7 +62,8 @@ def grabSignalOverUDP(nic, port):
 
 if __name__ == "__main__":
     _print("Connecting wifi")
-    nic, broadcast = networkHelpers.setupWifi()
+    #nic, broadcast = networkHelpers.setupWifi()
+    nic, _ = networkHelpers.setupWifi()
     grabSignalOverUDP(nic, PORT)
     main()
 
