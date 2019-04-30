@@ -4,18 +4,10 @@
 import sys
 import socket
 import network
+import board
 
 
 SOCKET_TIMEOUT = None
-
-KNOWN_CONNECTIONS = {
-    b"microP": b"micropython",
-    #b"Jia": b"marseille2paris",
-    #b"flip": b"PilfPilf",
-}
-
-ACCESS_POINT_ESSID = "microP"
-ACCESS_POINT_PASSWORD = "micropython"
 
 
 def ip2bits(ip):
@@ -93,31 +85,31 @@ class Connection:
 class WifiConnection(Connection):
     """Connect to a known connection.
 
-    the KNOWN_CONNECTIONS dict is stored in the file wifi.py.
+    the board.known_connections dict is stored in the file wifi.py.
     """
     def __init__(self):
         super().__init__(network.STA_IF)
         self.active(True)
         networks = self.scan()
         for name, *_ in networks:
-            if name in KNOWN_CONNECTIONS:
+            if name in board.known_connections:
                 #print("Connecting to {}".format(name.decode("ascii")))
-                self.connect(name, KNOWN_CONNECTIONS[name])
+                self.connect(name, board.known_connections[name])
                 break
 
 
 class AccessPoint(Connection):
     """Create a wifi access point.
 
-    The ACCESS_POINT_ESSID and ACCESS_POINT_PASSWORD are stored
+    The board.accessPointEssid and board.accessPointPassword are stored
     in the file wifi.py.
     """
     def __init__(self):
         super().__init__(network.AP_IF)
         self.active(True)
         self.config(
-                essid=ACCESS_POINT_ESSID,
-                password=ACCESS_POINT_PASSWORD,
+                essid=board.accessPointEssid,
+                password=board.accessPointPassword,
                 channel=11,
                 authmode=network.AUTH_WPA2_PSK,
         )

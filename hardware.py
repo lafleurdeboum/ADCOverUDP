@@ -4,6 +4,14 @@ import ssd1306
 import time
 
 
+def takeANap():
+    """Hang a few milliseconds"""
+    #machine.sleep(0.01)
+    #machine.lightsleep(10)
+    machine.idle()
+    time.sleep_ms(10)
+
+
 class ADC(machine.ADC):
     """superseed micropython's ADC class, hiding platform details.
     """
