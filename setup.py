@@ -9,11 +9,11 @@ import sdist_upip
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-print("setuptools va inclure les paquets %s" % [ setuptools.find_packages() ], file=sys.stderr)
-
 
 name = "micropython-ADCOverUDP"
 version = "0.3"
+
+print("setuptools va inclure les paquets %s" % [ setuptools.find_packages() ], file=sys.stderr)
 
 setuptools.setup(
     name=name,
@@ -34,7 +34,7 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     install_requires=[
-        "ssd1306",
+        "micropython-ssd1306",
     ],
     #extras_require={
     #    "OLED printout": "ssd1306",
