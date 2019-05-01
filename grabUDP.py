@@ -1,7 +1,7 @@
 import machine
 import time
 
-from hardware import Relay, takeANap
+from hardware import Relay, OLED, takeANap
 
 
 MAX_PAYLOAD = 4096
@@ -10,7 +10,7 @@ relay = Relay()
 
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = hardware.OLED().print
+_print = OLED().print
 
 def grabSignalOverUDP(socket, address):
     """Read a signal sent to this machine's port.

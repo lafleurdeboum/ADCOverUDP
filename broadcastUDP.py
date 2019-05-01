@@ -2,14 +2,14 @@ import gc
 import machine
 import time
 
-from hardware import ADC, takeANap
+from hardware import ADC, OLED, takeANap
 
 
 adc = ADC()
 
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = hardware.OLED().print
+_print = OLED().print
 
 def broadcastADCoverUDP(socket, address):
     """Send signal read on ADC on port port over UDP broadcast.

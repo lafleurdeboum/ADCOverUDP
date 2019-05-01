@@ -1,10 +1,10 @@
 import wifi
 import board
-from hardware import Display, takeANap
+from hardware import OLED, takeANap
 
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = Display().print
+_print = OLED().print
 
 if board.role == "server":
     connection = wifi.AccessPoint()
