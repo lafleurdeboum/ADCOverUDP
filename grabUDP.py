@@ -24,7 +24,8 @@ def grabSignalOverUDP(socket, address):
     # We will need non-blocking calls to be able to re-check connection state :
     socket.settimeout(2.0)
     try:
-        payload = socket.recv(4)
+        payload, sender = socket.recvfrom(4)
+        #sender = socket.recvfrom_into(payload)
     except OSError as e:
         if e.args[0] == 110:            # ETIMEDOUT
             # Connection timed out ; take A Nap and retry
@@ -36,7 +37,7 @@ def grabSignalOverUDP(socket, address):
         takeANap()
         return
     #DEBUG this returns an empty string - in fact b"\x00" * 4
-    print(payload.decode())
+    print(sender, payload.decode())
     # If signal goes above average, toggle relay :
     # WARNING this would use this machine's adc's output range.
     #if int(payload) > int(hardware.ADC.OUTPUT_RANGE / 2):
