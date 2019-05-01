@@ -1,4 +1,4 @@
-# ADCOverUDP.py
+# ADCOverUDP
 
 Send signals read from ADC over UDP broadcast (and use them).
 
