@@ -1,7 +1,5 @@
 # ADCOverUDP
 
-Send signals read from ADC over UDP broadcast (and use them).
-
 ## Audience
 
 This was written for micropython on ESP boards. Porting to some other board
