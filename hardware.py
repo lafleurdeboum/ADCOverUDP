@@ -18,9 +18,6 @@ class ADC(machine.ADC):
     elif sys.platform == "esp8266":
         # esp8266 ADC outputs 1024 levels. Same remarks apply.
         OUTPUT_RANGE = 1024
-    elif sys.platform == "linux":
-        # We will use a dummy ADC defined in machine.py
-        OUTPUT_RANGE = 4096
     FLOOR = OUTPUT_RANGE / 10
 
     def __init__(self):
@@ -30,8 +27,6 @@ class ADC(machine.ADC):
             self.width(machine.ADC.WIDTH_9BIT)
         elif sys.platform == "esp8266":
             super().__init__(0)
-        elif sys.platform == "linux":
-            super().__init__(machine.Pin(0))
 
     def readMeaningfulValue(self):
         """Blocking call looping on the ADC until it reaches ADC.FLOOR
@@ -71,17 +66,15 @@ class Relay(machine.Pin):
         self.off()
 
 
-def Display():
+def OLED():
     if sys.platform == "esp32":
-        d = _DisplayEsp32()
+        d = _OLEDDisplayEsp32()
     elif sys.platform == "esp8266":
-        d = _DisplayEsp8266()
-    elif sys.platform == "linux":
-        d = _DisplayX86()
+        d = _OLEDDisplayEsp8266()
     return d
 
 
-class _OledDisplay(ssd1306.SSD1306_I2C):
+class _OLEDDisplay(ssd1306.SSD1306_I2C):
     """The real Oled display manager.
 
     This class must be superseeded by a class initializing :
@@ -166,7 +159,7 @@ class _OledDisplay(ssd1306.SSD1306_I2C):
         self.show()
 
 
-class _DisplayEsp32(_OledDisplay):
+class _OLEDDisplayEsp32(_OLEDDisplay):
     """Implement ESP32 OLED display
     """
     TXD1_PIN = 4                        # OLED_SDA
@@ -178,7 +171,7 @@ class _DisplayEsp32(_OledDisplay):
         super().__init__()
 
 
-class _DisplayEsp8266(_OledDisplay):
+class _OLEDDisplayEsp8266(_OLEDDisplay):
     """Implement TTGO ESP8266 OLED display
     """
     TXD1_PIN = 2                        # OLED_SDA

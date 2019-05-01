@@ -11,7 +11,7 @@ PORT = 8080
 
 # _print to OLED GPIO display if any, otherwise
 # default to stdout :
-_print = hardware.Display().print
+_print = hardware.OLED().print
 
 relay = hardware.Relay()
 
