@@ -11,9 +11,9 @@ boards.
 
 ## Usage
 
-Edit `board.py`. Copy files over to an ESP device serving as broadcaster 
-(make sure to connect its ADC to something useful). Re-edit `board.py`. Upload
-to the listener.
+Go in `src`. Edit `board.py`. Copy files over to an ESP device serving as 
+broadcaster (make sure to connect its ADC to something useful). Re-edit
+`board.py`. Upload to the listener.
 
 Alternatively, one could use the `broadcasterInstallScript.sh` that uses
 `rshell` to upload files to the board. Then use `listenerInstallScript.sh`.
